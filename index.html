@@ -655,8 +655,12 @@
       function getSymbolPrefix(symbol) {
         if (!symbol) return "";
         const upper = symbol.toUpperCase();
-        const match = upper.match(/^[A-Z]+/);
-        return match ? match[0] : upper;
+        // 目前下拉选项均为 "<BASE>USDT" 形式，例如 BTCUSDT、ETHUSDT、ASTERUSDT
+        // 这里从交易对中抽取基础币种前缀，用于匹配 symbolLogoMap 中的 key
+        if (upper.endsWith("USDT")) {
+          return upper.slice(0, -4);
+        }
+        return upper;
       }
 
       // ---------------------------
