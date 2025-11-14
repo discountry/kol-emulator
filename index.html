@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>收益截图模拟器</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Tailwind CSS (browser CDN 版本，用于辅助布局与微调) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- 官方 Pulse 字体样式表 -->
+  <link rel="stylesheet" href="https://static.bgbstatic.com/cdnstatic/css/font.20250814.css" />
+  <style>
+    :root {
+      --bg-page: #020202;
+      --bg-card: #000000;
+      --text-white: #ffffff;
+      --text-muted: #7f8288;
+      --text-soft: #b3b5ba;
+      --green-long: #20c997;
+      --red-short: #ff4b5c;
+      --accent-orange: #f7931a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top left, #101010 0, #000000 60%);
+      color: var(--text-white);
+      /* 官方字体栈：Pulse, Arial, sans-serif */
+      font-family: Pulse, Arial, sans-serif !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app-root {
+      display: flex;
+      gap: 32px;
+      max-width: 1280px;
+      width: 100%;
+      align-items: flex-start;
+    }
+
+    .control-panel {
+      width: 360px;
+      max-height: 768px;
+      padding: 20px 20px 24px;
+      background: #060608;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .control-panel h1 {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .control-panel p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .form-section {
+      margin-bottom: 16px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .form-section-title {
+      font-size: 13px;
+      color: var(--text-soft);
+      margin-bottom: 8px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .field-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .field input,
+    .field select {
+      background: #111319;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-white);
+      padding: 6px 10px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(0, 189, 189, 0.8);
+    }
+
+    .field input[type="checkbox"] {
+      width: auto;
+      accent-color: #00bdbd;
+    }
+
+    #avatar-input {
+      width: 160px;
+    }
+
+    .field-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: linear-gradient(135deg, #0b2028, #071016);
+      color: var(--text-white);
+      font-size: 12px;
+      cursor: pointer;
+      margin-right: 6px;
+      height: 32px;
+    }
+
+    .btn-secondary {
+      background: #111319;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .preview-shell {
+      width: 768px;
+      height: 768px;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.9);
+      background: #000;
+      position: relative;
+    }
+
+    .preview-card {
+      position: relative;
+      width: 768px;
+      height: 768px;
+      background-image: url("bg.png");
+      background-size: cover;
+      background-position: center;
+      color: var(--text-white);
+      font-smooth: antialiased;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Core overlay layout – positions will be refined below */
+
+    .user-row {
+      position: absolute;
+      top: 42px;
+      left: 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-wrapper {
+      width: 54px;
+      height: 54px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: radial-gradient(circle at 30% 20%, #3c3f45, #14151a);
+      border: 2px solid rgba(255, 255, 255, 0.14);
+      flex-shrink: 0;
+    }
+
+    .avatar-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .user-text-primary {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+    }
+
+    .user-text-secondary {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .trade-summary {
+      position: absolute;
+      top: 136px;
+      left: 40px;
+      right: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    .symbol-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .symbol-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #3c3f45, #14151a);
+      display: block;
+    }
+
+    .symbol-main {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+    }
+
+    .symbol-sub {
+      font-size: 24px;
+      color: var(--text-muted);
+    }
+
+    .side-long {
+      color: var(--green-long);
+    }
+
+    .side-short {
+      color: var(--red-short);
+    }
+
+    .pnl-block {
+        display: flex;
+        flex-direction: column;
+        gap: 12px; 
+    }
+
+    .pnl-percent {
+      font-size: 86px;
+      line-height: 86px;
+      font-weight: 700;
+    }
+
+    .pnl-amount {
+      font-size: 28px;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      max-width: 420px;
+    }
+
+    .price-label {
+      font-size: 26px;
+      color: var(--text-muted);
+    }
+
+    .price-value {
+      font-size: 28px;
+      font-weight: 500;
+    }
+
+    .bottom-row {
+      position: absolute;
+      left: 40px;
+      right: 40px;
+      bottom: 34px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    #qrcode {
+      width: 64px;
+      height: 64px;
+      border-radius: 10px;
+      background-color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px;
+      box-sizing: border-box;
+    }
+
+    .invite-block {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .invite-code {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .invite-tip {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .helper-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-root">
+    <aside class="control-panel">
+      <h1>收益截图模拟器</h1>
+      <p>左侧调整参数，右侧实时预览，与背景图大小完全一致，可直接截图使用。</p>
+
+      <div class="form-section">
+        <div class="form-section-title">导出截图</div>
+        <button type="button" class="btn w-full" id="btn-save-screenshot">一键保存截图</button>
+        <div class="helper-note">将右侧预览卡片导出为 768×768 PNG 图片，直接保存到本地。</div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">用户信息</div>
+        <div class="field-row">
+          <div class="field" style="flex: 1;">
+            <label for="username-input">用户名</label>
+            <input id="username-input" type="text" data-field="username" placeholder="BGUSER-XXXXXXX" />
+          </div>
+          <div class="field">
+            <label for="avatar-input">头像上传</label>
+            <input id="avatar-input" type="file" accept="image/*" />
+          </div>
+        </div>
+        <div class="field-row flex items-center">
+            <div class="field">
+                <label for="time-input">时间 + 时区</label>
+                <input id="time-input" type="text" data-field="timeText" placeholder="2025-11-14 15:33 (UTC+8)" />
+              </div>
+              <button type="button" class="btn" id="btn-now">当前时间</button>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">交易设置</div>
+        <div class="field">
+          <label for="symbol-input">交易对</label>
+          <select id="symbol-select" data-field="symbol">
+            <option value="BTCUSDT">BTCUSDT</option>
+            <option value="ETHUSDT">ETHUSDT</option>
+            <option value="SOLUSDT">SOLUSDT</option>
+            <option value="DOGEUSDT">DOGEUSDT</option>
+            <option value="ENAUSDT">ENAUSDT</option>
+            <option value="SUIUSDT">SUIUSDT</option>
+            <option value="ZECUSDT">ZECUSDT</option>
+            <option value="HYPEUSDT">HYPEUSDT</option>
+            <option value="ASTERUSDT">ASTERUSDT</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field" style="flex:1;">
+            <label for="side-select">方向</label>
+            <select id="side-select" data-field="side">
+              <option value="long">做多</option>
+              <option value="short">做空</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="leverage-input">杠杆倍数</label>
+            <input id="leverage-input" type="number" min="1" max="200" step="1" data-field="leverage" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">收益与价格</div>
+        <div class="field-row">
+          <div class="field" style="flex:1;">
+            <label for="pnl-percent-input">收益率 (%)</label>
+            <input id="pnl-percent-input" type="number" step="0.01" data-field="pnlPercent" />
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="pnl-amount-input">收益额 (USDT)</label>
+            <input id="pnl-amount-input" type="number" step="0.0001" data-field="pnlAmount" />
+          </div>
+        </div>
+        <div class="field-checkbox">
+          <input id="toggle-pnl-amount" type="checkbox" checked />
+          <label for="toggle-pnl-amount">显示收益额</label>
+        </div>
+        <div class="field-row">
+          <div class="field" style="flex:1;">
+            <label for="entry-price-input">持仓均价</label>
+            <input id="entry-price-input" type="number" step="0.1" data-field="entryPrice" />
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="mark-price-input">当前价格</label>
+            <input id="mark-price-input" type="number" step="0.1" data-field="markPrice" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">邀请码与二维码</div>
+        <div class="field">
+          <label for="invite-code-input">邀请码</label>
+          <input id="invite-code-input" type="text" data-field="inviteCode" />
+        </div>
+        <div class="field">
+          <label>二维码链接</label>
+          <input type="text" value="https://partner.hdmune.cn/bg/MRSHJ6" readonly />
+        </div>
+        <button type="button" class="btn btn-secondary" id="btn-reset">重置为示例数据</button>
+      </div>
+    </aside>
+
+    <section class="preview-shell">
+      <div class="preview-card">
+        <div class="user-row">
+          <div class="avatar-wrapper">
+            <img id="avatar-img" alt="avatar" />
+          </div>
+          <div>
+            <div id="preview-username" class="user-text-primary">BGUSER-XXXXXXX</div>
+            <div id="preview-time" class="user-text-secondary">2025-11-14 15:33 (UTC+8)</div>
+          </div>
+        </div>
+
+        <div class="trade-summary">
+          <div class="symbol-row">
+            <img id="preview-symbol-logo" class="symbol-logo" alt="symbol logo" />
+            <div>
+              <div id="preview-symbol" class="symbol-main">BTCUSDT</div>
+              <div class="symbol-sub">
+                <span>永续 ｜ </span>
+                <span id="preview-side" class="side-long">做多</span>
+                <span> ｜ </span>
+                <span id="preview-leverage" class="side-long">50x</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pnl-block">
+            <div id="preview-pnl-percent" class="pnl-percent">0.52%</div>
+            <div id="preview-pnl-amount" class="pnl-amount">+0.0428 USDT</div>
+          </div>
+
+          <div class="price-row">
+            <div>
+              <div class="price-label">持仓均价</div>
+              <div id="preview-entry-price" class="price-value">97,337.4</div>
+            </div>
+            <div>
+              <div class="price-label">当前价格</div>
+              <div id="preview-mark-price" class="price-value">97,327.1</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-row">
+          <div id="qrcode"></div>
+          <div class="invite-block">
+            <div id="preview-invite-code" class="invite-code">邀请码: 5xw3</div>
+            <div class="invite-tip">扫码注册 Bitget，立即领取 6200 USDT</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- 外部二维码库（qrcodejs）来自 cdnjs: https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- DOM 转图片库（html2canvas），用于一键导出预览为 PNG -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script>
+    // ---------------------------
+    // 基础状态与工具函数
+    // ---------------------------
+    const QR_URL = "https://partner.hdmune.cn/bg/MRSHJ6";
+    const DEFAULT_AVATAR = "avatar.png";
+
+    const state = {
+      username: "BGUSER-20ZYXQFZ",
+      timeText: "",
+      symbol: "BTCUSDT",
+      side: "short",
+      leverage: 50,
+      pnlPercent: 0.52,
+      pnlAmount: 0.0428,
+      showPnlAmount: true,
+      entryPrice: 97337.4,
+      markPrice: 97327.1,
+      inviteCode: "5xw3",
+      avatarDataUrl: ""
+    };
+
+    const symbolLogoMap = {
+      BTC: "logos/btc.png",
+      ETH: "logos/eth.png",
+      SOL: "logos/sol.png",
+      DOGE: "logos/doge.png",
+      ENA: "logos/ena.png",
+      SUI: "logos/sui.png",
+      ZEC: "logos/zec.png",
+      HYPE: "logos/hype.png",
+      ASTER: "logos/aster.png"
+    };
+
+    function formatNumber(value, decimals) {
+      if (value === null || value === undefined || isNaN(value)) return "--";
+      const fixed = Number(value).toFixed(decimals);
+      const parts = fixed.split(".");
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return parts.join(".");
+    }
+
+    function formatPnlPercent(value) {
+      if (value === null || value === undefined || isNaN(value)) return "0.00%";
+      const num = Number(value);
+      return (num >= 0 ? "" : "") + num.toFixed(2) + "%";
+    }
+
+    function formatPnlAmount(value) {
+      if (value === null || value === undefined || isNaN(value)) return "+0.0000 USDT";
+      const num = Number(value);
+      const sign = num > 0 ? "+" : num < 0 ? "-" : "";
+      return sign + Math.abs(num).toFixed(4) + " USDT";
+    }
+
+    function buildTimeString() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mi = String(now.getMinutes()).padStart(2, "0");
+      // 直接使用本地假设为 UTC+8，方便与你示例保持一致
+      return `${yyyy}-${mm}-${dd} ${hh}:${mi} (UTC+8)`;
+    }
+
+    function getSymbolPrefix(symbol) {
+      if (!symbol) return "";
+      const upper = symbol.toUpperCase();
+      const match = upper.match(/^[A-Z]+/);
+      return match ? match[0] : upper;
+    }
+
+    // ---------------------------
+    // 预览渲染
+    // ---------------------------
+    function renderPreview() {
+      const usernameEl = document.getElementById("preview-username");
+      const timeEl = document.getElementById("preview-time");
+      const symbolEl = document.getElementById("preview-symbol");
+      const sideEl = document.getElementById("preview-side");
+      const leverageEl = document.getElementById("preview-leverage");
+      const pnlPercentEl = document.getElementById("preview-pnl-percent");
+      const pnlAmountEl = document.getElementById("preview-pnl-amount");
+      const entryPriceEl = document.getElementById("preview-entry-price");
+      const markPriceEl = document.getElementById("preview-mark-price");
+      const inviteCodeEl = document.getElementById("preview-invite-code");
+      const logoEl = document.getElementById("preview-symbol-logo");
+      const avatarImg = document.getElementById("avatar-img");
+
+      usernameEl.textContent = state.username || "BGUSER-XXXXXXX";
+      timeEl.textContent = state.timeText || buildTimeString();
+
+      const upperSymbol = (state.symbol || "").toUpperCase();
+      symbolEl.textContent = upperSymbol || "BTCUSDT";
+
+      const sideIsLong = state.side === "long";
+      sideEl.textContent = sideIsLong ? "做多" : "做空";
+      leverageEl.textContent = (state.leverage || 1) + "x";
+
+      sideEl.classList.toggle("side-long", sideIsLong);
+      leverageEl.classList.toggle("side-long", sideIsLong);
+      sideEl.classList.toggle("side-short", !sideIsLong);
+      leverageEl.classList.toggle("side-short", !sideIsLong);
+
+      pnlPercentEl.textContent = formatPnlPercent(state.pnlPercent);
+
+      if (state.showPnlAmount) {
+        pnlAmountEl.style.display = "";
+        pnlAmountEl.textContent = formatPnlAmount(state.pnlAmount);
+      } else {
+        pnlAmountEl.style.display = "none";
+      }
+
+      entryPriceEl.textContent = formatNumber(state.entryPrice, 1);
+      markPriceEl.textContent = formatNumber(state.markPrice, 1);
+
+      inviteCodeEl.textContent = "邀请码: " + (state.inviteCode || "");
+
+      const prefix = getSymbolPrefix(upperSymbol || "BTC");
+      const logoPath = symbolLogoMap[prefix] || symbolLogoMap.BTC;
+      logoEl.src = logoPath;
+
+      if (state.avatarDataUrl) {
+        avatarImg.src = state.avatarDataUrl;
+      } else {
+        avatarImg.src = DEFAULT_AVATAR;
+      }
+    }
+
+    // ---------------------------
+    // 表单绑定
+    // ---------------------------
+    function bindForm() {
+      const textInputs = document.querySelectorAll("input[data-field], select[data-field]");
+      textInputs.forEach((el) => {
+        const field = el.getAttribute("data-field");
+        el.addEventListener("input", () => {
+          const value = el.type === "number" ? Number(el.value) : el.value;
+          state[field] = value;
+          renderPreview();
+        });
+      });
+
+      const togglePnl = document.getElementById("toggle-pnl-amount");
+      togglePnl.addEventListener("change", () => {
+        state.showPnlAmount = togglePnl.checked;
+        renderPreview();
+      });
+
+      const avatarInput = document.getElementById("avatar-input");
+      avatarInput.addEventListener("change", () => {
+        const file = avatarInput.files && avatarInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          state.avatarDataUrl = String(e.target.result);
+          renderPreview();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      document.getElementById("btn-now").addEventListener("click", () => {
+        const timeStr = buildTimeString();
+        state.timeText = timeStr;
+        const input = document.getElementById("time-input");
+        input.value = timeStr;
+        renderPreview();
+      });
+
+      document.getElementById("btn-reset").addEventListener("click", () => {
+        state.username = "BGUSER-20ZYXQFZ";
+        state.timeText = "2025-11-14 15:33 (UTC+8)";
+        state.symbol = "BTCUSDT";
+        state.side = "short";
+        state.leverage = 50;
+        state.pnlPercent = 0.52;
+        state.pnlAmount = 0.0428;
+        state.showPnlAmount = true;
+        state.entryPrice = 97337.4;
+        state.markPrice = 97327.1;
+        state.inviteCode = "5xw3";
+
+        document.getElementById("username-input").value = state.username;
+        document.getElementById("time-input").value = state.timeText;
+        document.getElementById("symbol-select").value = state.symbol;
+        document.getElementById("side-select").value = state.side;
+        document.getElementById("leverage-input").value = state.leverage;
+        document.getElementById("pnl-percent-input").value = state.pnlPercent;
+        document.getElementById("pnl-amount-input").value = state.pnlAmount;
+        document.getElementById("entry-price-input").value = state.entryPrice;
+        document.getElementById("mark-price-input").value = state.markPrice;
+        document.getElementById("invite-code-input").value = state.inviteCode;
+        document.getElementById("toggle-pnl-amount").checked = state.showPnlAmount;
+
+        renderPreview();
+      });
+
+      const saveBtn = document.getElementById("btn-save-screenshot");
+      if (saveBtn) {
+        saveBtn.addEventListener("click", () => {
+          const target = document.querySelector(".preview-card");
+          if (!target || typeof html2canvas === "undefined") return;
+          html2canvas(target, {
+            useCORS: true,
+            backgroundColor: null,
+            scale: window.devicePixelRatio || 1
+          }).then((canvas) => {
+            const link = document.createElement("a");
+            const ts = new Date();
+            const yyyy = ts.getFullYear();
+            const mm = String(ts.getMonth() + 1).padStart(2, "0");
+            const dd = String(ts.getDate()).padStart(2, "0");
+            const hh = String(ts.getHours()).padStart(2, "0");
+            const mi = String(ts.getMinutes()).padStart(2, "0");
+            const ss = String(ts.getSeconds()).padStart(2, "0");
+            link.download = `pnl-snapshot-${yyyy}${mm}${dd}-${hh}${mi}${ss}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+          });
+        });
+      }
+    }
+
+    // ---------------------------
+    // 初始化
+    // ---------------------------
+    function init() {
+      // 初始填充值
+      document.getElementById("username-input").value = state.username;
+      document.getElementById("time-input").value = state.timeText || buildTimeString();
+      state.timeText = document.getElementById("time-input").value;
+      document.getElementById("symbol-select").value = state.symbol;
+      document.getElementById("side-select").value = state.side;
+      document.getElementById("leverage-input").value = state.leverage;
+      document.getElementById("pnl-percent-input").value = state.pnlPercent;
+      document.getElementById("pnl-amount-input").value = state.pnlAmount;
+      document.getElementById("entry-price-input").value = state.entryPrice;
+      document.getElementById("mark-price-input").value = state.markPrice;
+      document.getElementById("invite-code-input").value = state.inviteCode;
+
+      bindForm();
+      renderPreview();
+
+      const qrContainer = document.getElementById("qrcode");
+      // 使用外部 qrcodejs 库生成二维码，适配放大后的底座尺寸
+      new QRCode(qrContainer, {
+        text: QR_URL,
+        width: 48,
+        height: 48,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
+
+
