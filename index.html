@@ -323,8 +323,8 @@
       }
 
       #qrcode {
-        width: 64px;
-        height: 64px;
+        width: 80px;
+        height: 80px;
         border-radius: 4px;
         background-color: #ffffff;
         display: flex;
@@ -342,19 +342,19 @@
       }
 
       .invite-code {
-        font-size: 16px;
+        font-size: 24px;
         font-weight: 500;
         line-height: 1.4;
       }
 
       .invite-tip {
-        font-size: 13px;
+        font-size: 24px;
         color: var(--text-muted);
         line-height: 1.4;
       }
 
       .helper-note {
-        font-size: 11px;
+        font-size: 16px;
         color: var(--text-muted);
         margin-top: 4px;
       }
@@ -852,8 +852,8 @@
         // 使用外部 qrcodejs 库生成二维码，适配放大后的底座尺寸
         new QRCode(qrContainer, {
           text: QR_URL,
-          width: 48,
-          height: 48,
+          width: 64,
+          height: 64,
           colorDark: "#000000",
           colorLight: "#ffffff",
           correctLevel: QRCode.CorrectLevel.H,
